@@ -1,22 +1,41 @@
-from sqlalchemy import Column, String, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
-import datetime
 from database.core import Base 
 
-class User(Base):
+class UserBase(Base):
     __tablename__ = 'users'
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    first_name = Column(String, nullable=False)
-    last_name = Column(String, nullable=False)
+    id = Column(Integer, primary_key=True, index=True)
+    full_name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
-    password_hash = Column(String, nullable=False)
-    is_recruiter = Column(Boolean, default=False)
-    is_candidate = Column(Boolean, default=False)
     phone_number = Column(String, nullable=True)
-    address = Column(String, nullable=True)
+    hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
 
-    # def __repr__(self):
-    #     return f"<User(email='{self.email}', first_name='{self.first_name}', last_name='{self.last_name}')>"
+class Recruiter(UserBase):
+    # __tablename__ = 'users'
+    # __table_args__ = {'extend_existing': True}
+
+    job_title = Column(String)
+    company_name = Column(String)
+    industry = Column(String)
+    company_website = Column(String)
+    company_size= Column(String)
+    is_recruiter = Column(Boolean, default=False)
+    jobs = relationship('Job', back_populates='recruiter', cascade="all, delete-orphan")
+
+class Candidate(UserBase):
+    # __tablename__ = 'users'
+    # __table_args__ = {'extend_existing': True}
+
+    dob = Column(String)
+    gender = Column(String)
+    address = Column(String)
+    experience = Column(String)
+    skills = Column(String,)
+    linkedin = Column(String)
+    portfolio = Column(String)
+    resume = Column(String)
+    is_candidate = Column(Boolean, default=False)

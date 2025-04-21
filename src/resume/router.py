@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from database.core import get_db
+from job.models import Job
 from resume.models import Resume
 from resume.schemas import ResumeSchema
 from resume.utils import save_resume
@@ -41,12 +42,15 @@ def upload_resume(
 @router.get("/scan/")
 def scan_resumes(recruiter_id: int, job_id: int, db: Session = Depends(get_db)):
     resumes = db.query(Resume).filter(
-        Resume.recruiter_id == recruiter_id and Resume.job_id == job_id
+        (Resume.recruiter_id == recruiter_id) & (Resume.job_id == job_id)
     ).all()
-    os.getcwd()
-    job_description = """AI developer needed have a BS degree related to CS field in LUMS universaity must.
-    Must have 2 years of experience in Full Stack development.
-    Must have experience in Python, Java, C++ and C#."""
+    job = db.query(Job).filter(Job.id == job_id).first()
+    
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    job_description = job.job_description
+    response = {}
     for resume in resumes:
         resume_path = os.path.join(
             os.getcwd(), resume.resume_url
@@ -55,10 +59,12 @@ def scan_resumes(recruiter_id: int, job_id: int, db: Session = Depends(get_db)):
         result = scan_resume(resume_text, job_description)
         response = parse_response(result)
 
-        resume.rank = response.get("score")
-        resume.shortlisted = bool(response.get("match"))
+        resume.rank = response.get("score", 0)
+        resume.shortlisted = bool(response.get("match", False))
         db.commit()
-        return response
+
+    return {"message": "Resumes scanned successfully"}
+    
 
 
 @router.get("/all")

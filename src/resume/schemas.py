@@ -8,4 +8,4 @@ class ResumeSchema(BaseModel):
     username: str
     resume_url: str
     shortlisted: Optional[bool] = False
-    rank: Optional[int] = 0
+    rank: Optional[int] = None
